@@ -54,7 +54,7 @@ def getLastTimeOfTab(tabName):
 def getNext10mTime(dt):
     delta10m = timedelta(minutes=10)
     nextdate = dt+ delta10m
-    return nextdate
+    return roundDate(nextdate)
 
 ################################################################
 def makeTimeGridToTables(tabName):
