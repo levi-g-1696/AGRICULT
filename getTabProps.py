@@ -17,10 +17,11 @@ def getTabProperties(csvFilePath):
 
             # breaking the loop after the
             # first iteration itself
-    fieldString =list_of_rows[0]
-    valsString = list_of_rows[1]
-    fieldString.pop(0)  # revove 2 first: tabTag and date
-    fieldString.pop(0)
+    fieldList =list_of_rows[0]
+    valsList = list_of_rows[1]
+    fieldList.pop(0)  # revove 2 first: tabTag and date
+    fieldList.pop(0)
 
-    tabName= valsString [0]
-    return tabName,fieldString
+
+    tabName= valsList [0]
+    return tabName,fieldList

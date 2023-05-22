@@ -113,8 +113,8 @@ def checkFileCommon(csv_filename): # without gui
 
 
 
-file= r"C:\Users\office22\Desktop\zmani\agricultCSV\a48.csv"
-print (checkFileCommon(file))
+#file= r"C:\Users\office22\Desktop\zmani\agricultCSV\a48.csv"
+#print (checkFileCommon(file))
 
 
 

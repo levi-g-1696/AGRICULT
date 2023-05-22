@@ -32,19 +32,21 @@ def getLastTimeOfTab(tabName):
                       "Trusted_Connection=yes;")
 
   cursor = cnxn.cursor()
-
+  deltadays = timedelta(days=2)
   com=f"SELECT MAX (datetime)  FROM {tabName}";
   try:
       cursor.execute(com)
       row = cursor.fetchone()
       if row == None or row[0] == None:
         dt= datetime.now()
+
         dt = roundDate(dt)
+
       else:
        dt = roundDate(row[0])
   except:
       print ("cannot connect to table")
-      dt = datetime.now() - timedelta(minutes=10)
+      dt = datetime.now() - timedelta(days=2)
       dt = roundDate(dt)
 
   return dt
@@ -63,6 +65,7 @@ def makeTimeGridToTables(tabName):
 
   dt = datetime.now()
   delta10days= timedelta(days=2)
+  startdate= dt- delta10days
   enddate= dt+delta10days
 
   cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
@@ -79,16 +82,17 @@ def makeTimeGridToTables(tabName):
   while (nextdate< enddate):
     nextid= getIDbyTime(nextdate)
     dateStr=nextdate.strftime("%Y-%m-%dT%H:%M:%S")
-    com = f"INSERT INTO {tabName} (id,datetime) VALUES ({nextid},'{dateStr}')"
-    comVLD=f"INSERT INTO {tabVLDname} (id,datetime) VALUES ({nextid},'{dateStr}')"
-    comStatus=f"INSERT INTO {statusTable} (tableName,FK,datastate,vldstate,sendstate) VALUES ( '{tabName}',{nextid},{datastateDef},{vldstateDef},{sendstateDef})"
+    com = f"INSERT INTO [{tabName}] (id,datetime) VALUES ({nextid},'{dateStr}')"
+    comVLD=f"INSERT INTO [{tabVLDname}] (id,datetime) VALUES ({nextid},'{dateStr}')"
+    comStatus=f"INSERT INTO [{statusTable}] (tableName,FK,datastate,vldstate,sendstate) VALUES ( '{tabName}',{nextid},{datastateDef},{vldstateDef},{sendstateDef})"
 
     nextdate = getNext10mTime(nextdate)
-    print (comStatus)
+    print(com)
     cursor.execute(com)
     cursor.execute(comVLD)
+    print(comStatus)
     cursor.execute(comStatus)
   cursor.commit()
 
 
-makeTimeGridToTables(("z49"))
+#makeTimeGridToTables(("z49"))

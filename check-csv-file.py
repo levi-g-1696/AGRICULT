@@ -48,5 +48,5 @@ def check_empty_fields2(csv_filename): # without gui
                 col_count += 1
             row_count += 1
     return isok
-isok=  check_empty_fields1('t.csv')
+#isok=  check_empty_fields1('t.csv')
 print (isok)
