@@ -45,27 +45,46 @@ def getLastTimeOfTab(tabName):
       else:
        dt = roundDate(row[0])
   except:
-      print ("cannot connect to table")
+      print ("getLatTimeOfTab says:cannot connect to table-")
       dt = datetime.now() - timedelta(days=2)
       dt = roundDate(dt)
 
   return dt
 
 ################################################################
+def isIDinDBgrid(tabName,id):
+    cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
+                          "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
+                          "Database=agr-dcontrol;"
+                          "Trusted_Connection=yes;")
 
+    cursor = cnxn.cursor()
+    checkIfExistCom = f"select id from [{tabName}] where id= {id}"
+    cursor.execute(checkIfExistCom)
+
+    row = cursor.fetchone()
+
+    if row == None or row[0] == None:
+        print(f"id {id} for {tabName} is not in grid")
+        return False
+    else:
+        f"new id {id}  in grid"
+        return True
+##################################################
 def getNext10mTime(dt):
     delta10m = timedelta(minutes=10)
     nextdate = dt+ delta10m
     return roundDate(nextdate)
 
 ################################################################
-def makeTimeGridToTables(tabName):
+def makeTimeGridToTables(tabName,fromDate,daysNum):
   statusTable="VLDstat"
-  lastTime = getLastTimeOfTab(tabName)
+  #lastTime = getLastTimeOfTab(tabName)
 
-  dt = datetime.now()
-  delta10days= timedelta(days=2)
-  startdate= dt- delta10days
+  #dt = datetime.now()
+  dt = fromDate
+  delta10days= timedelta(days=daysNum)
+
   enddate= dt+delta10days
 
   cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
@@ -75,23 +94,27 @@ def makeTimeGridToTables(tabName):
 
   cursor = cnxn.cursor()
   tabVLDname= tabName+"v"
-  nextdate= getNext10mTime(lastTime)
+  nextdate= getNext10mTime(fromDate)
   datastateDef=-10
   sendstateDef=0
   vldstateDef=0
   while (nextdate< enddate):
     nextid= getIDbyTime(nextdate)
-    dateStr=nextdate.strftime("%Y-%m-%dT%H:%M:%S")
-    com = f"INSERT INTO [{tabName}] (id,datetime) VALUES ({nextid},'{dateStr}')"
-    comVLD=f"INSERT INTO [{tabVLDname}] (id,datetime) VALUES ({nextid},'{dateStr}')"
-    comStatus=f"INSERT INTO [{statusTable}] (tableName,FK,datastate,vldstate,sendstate) VALUES ( '{tabName}',{nextid},{datastateDef},{vldstateDef},{sendstateDef})"
 
+    if isIDinDBgrid(tabName,nextid):
+      print(f"makeTimeGridToTables says: id {nextid} already in table {tabName} ")
+
+    else :
+        dateStr = nextdate.strftime("%Y-%m-%dT%H:%M:%S")
+        com = f"INSERT INTO [{tabName}] (id,datetime) VALUES ({nextid},'{dateStr}')"
+        comVLD = f"INSERT INTO [{tabVLDname}] (id,datetime) VALUES ({nextid},'{dateStr}')"
+        comStatus = f"INSERT INTO [{statusTable}] (tableName,FK,datastate,vldstate,sendstate) VALUES ( '{tabName}',{nextid},{datastateDef},{vldstateDef},{sendstateDef})"
+        print(com)
+        cursor.execute(com)
+        cursor.execute(comVLD)
+        print(comStatus)
+        cursor.execute(comStatus)
     nextdate = getNext10mTime(nextdate)
-    print(com)
-    cursor.execute(com)
-    cursor.execute(comVLD)
-    print(comStatus)
-    cursor.execute(comStatus)
   cursor.commit()
 
 

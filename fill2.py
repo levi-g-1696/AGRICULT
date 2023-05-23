@@ -1,5 +1,8 @@
 import os
-from fillDefaults import makeTimeGridToTables
+import shutil
+
+from fillDefaults import makeTimeGridToTables,isIDinDBgrid
+#makeTimeGridToTables(tabName,fromDate,daysNum):
 import pyodbc
 from csvValidations import getTabNamesFrobDB
 import globalConfig
@@ -8,7 +11,7 @@ from csvValidations import checkFileCommon
 from fillDefaults import getIDbyTime
 import csv
 from ftplib import FTP
-
+from datetime import datetime,timedelta
 from dateutil.parser import parse
 from getTabProps import getTabProperties
 from mylogging import logDataFillError
@@ -120,30 +123,72 @@ def download20Ftp(workFolder,ip,port,user,psw):
         file.close()
         try:
             ftp.delete(filename)
-            print("file was deletd:",filename)
+            print("FTP. file was deletd:",filename)
         except Exception:
             ftp.rmd(filename)
         counter=counter-1
         if counter==0 :break
-    ftp.quit()  #
-    return
+    ftp.quit()
+    fullpathList=[]
+    fileList = os.listdir(workFolder)
+    for f in fileList:
+        fpath = os.path.join(csvFolder, f)
+        fullpathList.append(fpath)
+    #
+    return fullpathList
 ######################################################################
+
+################################################
+def isFileInGrid(csvFile):
+    with open(csvFile) as csv_file:
+        row_count = 0
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        k = 0
+        line_count = 0
+        result= True
+        for row in csv_reader:
+            if line_count == 0:
+                # go to next- only data lines we need
+                line_count += 1
+            else:
+                dt=getDate(row)
+
+                rowid= getIDbyTime(dt)
+                tname,x= getTabProperties(csvFile)
+                if isIDinDBgrid(tname,rowid) :continue
+                else:
+                    result=False
+                    print (f"isFileIngrid says: file {csvFile} tab {tname} has not grid in Db for {rowid}")
+                    break
+
+            line_count += 1
+        return result
+#################################################
 csvFolder= globalConfig.csvFilesDirectory
+
+delta=  timedelta(days=5)
+now = datetime.now()
+startgrid= now - delta
 ip= "192.168.201.45"
 port= "21"
 user = "dcontrol10m"
 psw= "23d-CONTROL"
-csvFolder= r"C:\Users\office22\Desktop\zmani\ftp"
+csvFolder= r"D:\loggernet CSV files"
+out=r"D:\loggernet CSV files\not in grid"
 getFilelistFTP(ip,port,user,psw)
-download20Ftp(csvFolder,ip,port,user,psw)
-fileList=os.listdir(csvFolder)
-for f in fileList:
-    fpath= os.path.join(csvFolder, f)
-    name,mlist= getTabProperties(fpath)
-    if name not in getTabNamesFrobDB():
-       createTable(name,mlist)
-       makeTimeGridToTables(name)
-    fillFileValsToDB(fpath)
+#1000 files
+for i in range (50):
+  pathlist = download20Ftp(csvFolder, ip, port, user, psw)
 
+  for fpath in pathlist:
+    if os.path.isfile(fpath):
+      name,mlist= getTabProperties(fpath)
+      if name not in getTabNamesFrobDB():
+         createTable(name,mlist)
+         makeTimeGridToTables(name,startgrid,7)
+      if isFileInGrid(fpath)  :  fillFileValsToDB(fpath)
+      else:
+        shutil.copy(fpath,out)
+      os.remove(fpath)
 
 
