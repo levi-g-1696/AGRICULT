@@ -87,6 +87,20 @@ def checkDateField(csvFilePath):
              result = False
     return result
 #############################################################################################################
+def makeDbPropsInCsv(filePath):
+  with open(filePath, 'w') as file:
+     file.write('table,monitors\n')
+  with open(filePath, 'a') as file:
+    tabnames=getTabNamesFrobDB()
+    for tname in tabnames:
+      monlist= getMonListFromDB(tname)
+      monListStr=""
+      for i in range(0,len(monlist)):
+          monListStr=monListStr + monlist[i]+";"
+      monListStr= monListStr[:-1] #delete last ";"
+      row= tname +","+monListStr+"\n"
+      file.write(row)
+
   ####################################################################################################
 def checkFileCommon(csv_filename): # without gui
    tabName,monitorList = getTabProperties(csv_filename)

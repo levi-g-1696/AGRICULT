@@ -7,7 +7,7 @@ import pyodbc
 from csvValidations import getTabNamesFrobDB
 import globalConfig
 from sqlCreateTables import createTable
-from csvValidations import checkFileCommon
+from csvValidations import checkFileCommon,makeDbPropsInCsv
 from fillDefaults import getIDbyTime
 import csv
 from ftplib import FTP
@@ -129,6 +129,7 @@ def download20Ftp(workFolder,ip,port,user,psw):
         counter=counter-1
         if counter==0 :break
     ftp.quit()
+    ftp.close()
     fullpathList=[]
     fileList = os.listdir(workFolder)
     for f in fileList:
@@ -137,7 +138,17 @@ def download20Ftp(workFolder,ip,port,user,psw):
     #
     return fullpathList
 ######################################################################
+def push_file_FTP(ip,port,user, psw,filePath):
+    ftp = FTP()
+    ftp.connect(ip, int(port))
+    ftp.login(user, psw)
 
+    fileNameStrArr=str(filePath).split("\\")
+    lastIndx= len(fileNameStrArr)-1
+    fileName= fileNameStrArr[lastIndx]
+
+    ftp.storbinary('STOR ' + fileName, open(filePath, 'rb'))
+    ftp.close()
 ################################################
 def isFileInGrid(csvFile):
     with open(csvFile) as csv_file:
@@ -175,9 +186,10 @@ user = "dcontrol10m"
 psw= "23d-CONTROL"
 csvFolder= r"D:\loggernet CSV files"
 out=r"D:\loggernet CSV files\not in grid"
+userForSendDBStruct="dbstruct"
 getFilelistFTP(ip,port,user,psw)
 #1000 files
-for i in range (50):
+for i in range (20):
   pathlist = download20Ftp(csvFolder, ip, port, user, psw)
 
   for fpath in pathlist:
@@ -191,4 +203,6 @@ for i in range (50):
         shutil.copy(fpath,out)
       os.remove(fpath)
 
-
+  file=r"C:\Users\office22\PycharmProjects\agricult\datafiles\dbStruct.csv"
+  makeDbPropsInCsv(file)
+  push_file_FTP(ip,port,userForSendDBStruct,psw,file)
