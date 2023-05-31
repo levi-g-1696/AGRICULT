@@ -32,22 +32,29 @@ def getLastTimeOfTab(tabName):
                       "Trusted_Connection=yes;")
 
   cursor = cnxn.cursor()
+  #^^^^^^^^^^^^^^^^^^^^debug^^^^^^^^^^^^^^^^^^^^
+  #d = cursor.execute(f'SELECT datetime FROM {tabName}')
+ # row = cursor.fetchone()
+#  print(row)
+  #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  dt = datetime.now()
   deltadays = timedelta(days=2)
-  com=f"SELECT MAX (datetime)  FROM {tabName}";
   try:
-      cursor.execute(com)
-      row = cursor.fetchone()
-      if row == None or row[0] == None:
-        dt= datetime.now()
+    com=f'SELECT  max(datetime)  FROM [{tabName}]';
+   # print (com)
+    cursor.execute(com)
+    row = cursor.fetchone()
+    if row == None or row[0] == None: #table is empty
+        dt = dt - timedelta(hours=12)
 
-        dt = roundDate(dt)
-
-      else:
-       dt = roundDate(row[0])
+    else:   #table has entries
+    #   print (row,"debug6556")
+       dt = roundDate(row[0]) -timedelta(hours=0.2)
+ #
   except:
-      print ("getLatTimeOfTab says:cannot connect to table-")
-      dt = datetime.now() - timedelta(days=2)
-      dt = roundDate(dt)
+    print ("getLastTimeOfTab says:exception on connecting to db or time parsing")
+
+  dt = roundDate(dt)
 
   return dt
 
@@ -68,7 +75,7 @@ def isIDinDBgrid(tabName,id):
         print(f"id {id} for {tabName} is not in grid")
         return False
     else:
-        f"new id {id}  in grid"
+        print(f"new id {id} for {tabName}  is in grid!!")
         return True
 ##################################################
 def getNext10mTime(dt):
@@ -94,6 +101,7 @@ def makeTimeGridToTables(tabName,fromDate,daysNum):
 
   cursor = cnxn.cursor()
   tabVLDname= tabName+"v"
+
   nextdate= getNext10mTime(fromDate)
   datastateDef=-10
   sendstateDef=0
@@ -102,7 +110,8 @@ def makeTimeGridToTables(tabName,fromDate,daysNum):
     nextid= getIDbyTime(nextdate)
 
     if isIDinDBgrid(tabName,nextid):
-      print(f"makeTimeGridToTables says: id {nextid} already in table {tabName} ")
+      nooperation=1
+    #  print(f"makeTimeGridToTables says: id {nextid} already in table {tabName} ")
 
     else :
         dateStr = nextdate.strftime("%Y-%m-%dT%H:%M:%S")

@@ -1,6 +1,9 @@
+import logging
 import os
 import shutil
-
+from csvValidations import getTabProperties,getMonListFromDB,getTabNamesFromStationsTable
+from fillDefaults import getLastTimeOfTab
+from fill2 import makeTimeGridToTables
 from fillDefaults import makeTimeGridToTables,isIDinDBgrid
 #makeTimeGridToTables(tabName,fromDate,daysNum):
 import pyodbc
@@ -14,7 +17,7 @@ from ftplib import FTP
 from datetime import datetime,timedelta
 from dateutil.parser import parse
 from getTabProps import getTabProperties
-from mylogging import logDataFillError
+#from mylogging import logDataFillError
 
 ##############################################################
 def getDate(csvRow):
@@ -23,6 +26,23 @@ def getDate(csvRow):
     parse(nextDate)
     return parse(nextDate)
 ############################################
+def prepareTablesGrid():
+    tabList= getTabNamesFromStationsTable()
+    for tab in tabList:
+        lastTabTime= getLastTimeOfTab(tab)
+     #   while lastTabTime-  datetime.timedelta(hours=12) < datetime.datetime.now():
+        if lastTabTime-  timedelta(hours=12) < datetime.now():
+            numdays= abs((datetime.now() - lastTabTime).days)+1
+           # print ("debug0003", "numdays:",numdays)
+            for j in range(numdays):
+            #  print (tab, lastTabTime,"debug828", "j:",j)
+              makeTimeGridToTables(tab,lastTabTime,1)
+              lastTabTime = getLastTimeOfTab(tab)
+
+              print (f"PrepareTablesGrid says: grid for {tab} {lastTabTime}+1day is ready")
+        else:
+          print (f"PrepareTablesGrid says: grid for {tab} {lastTabTime}+1day is good. no action requered.")
+#########################################
 def buildSqlReq(tabname,monList,csvRow):
     time= getDate(csvRow)
     id= getIDbyTime(time)
@@ -72,13 +92,13 @@ def fillFileValsToDB(csvFile):
         cursor.commit()
         cnxn.close()
  ##########################################################################
-def dbFiller(csvFileList)  :
+#def dbFiller(csvFileList)  :
 
-    for filePath in csvFileList:
-        isFileStructOK,errorCode= checkFileCommon(filePath)
-        if isFileStructOK :
-            fillFileValsToDB(filePath)
-        else:logDataFillError(filePath,errorCode)
+    # for filePath in csvFileList:
+    #     isFileStructOK,errorCode= checkFileCommon(filePath)
+    #     if isFileStructOK :
+    #         fillFileValsToDB(filePath)
+    #     else:logDataFillError(filePath,errorCode)
 
 ############################################################################
 
@@ -139,6 +159,16 @@ def download20Ftp(workFolder,ip,port,user,psw):
     #
     return fullpathList
 ######################################################################
+def logfileStructError (csvFile,codeErr):
+
+    logFile = globalConfig.logFile
+    logging.basicConfig(filename=logFile, level=logging.INFO, format='%(asctime)s %(message)s',
+                            datefmt='%d/%m/%Y %H:%M:%S')
+
+    logging.info("," +csvFile + "," + str(codeErr))
+    return
+
+#########################################################
 def push_file_FTP(ip,port,user, psw,filePath):
     ftp = FTP()
     ftp.connect(ip, int(port))
@@ -176,39 +206,44 @@ def isFileInGrid(csvFile):
             line_count += 1
         return result
 #################################################
-csvFolder= globalConfig.csvFilesDirectory
+if __name__ == '__main__':
+    csvFolder = globalConfig.csvFilesDirectory
 
-delta=  timedelta(days=5)
-now = datetime.now()
-startgrid= now - delta
-ip= "192.168.201.45"
-port= "21"
-user = "dcontrol10m"
-psw= "23d-CONTROL"
-csvFolder= r"D:\loggernet CSV files"
-out=r"D:\loggernet CSV files\not in grid"
-userForSendDBStruct="dbstruct"
-getFilelistFTP(ip,port,user,psw)
-#1000 files
-# for i in range (300):
-#   pathlist = download20Ftp(csvFolder, ip, port, user, psw)
-#
-#   for fpath in pathlist:
-#     if os.path.isfile(fpath):
-#       name,mlist= getTabProperties(fpath)
-#       if name not in getTabNamesFrobDB():
-#          createTable(name,mlist)
-#          makeTimeGridToTables(name,startgrid,7)
-#       if isFileInGrid(fpath)  :  fillFileValsToDB(fpath)
-#       else:
-#       #  shutil.copy(fpath,out)
-#         delta6h = timedelta(hours=6)
-#         dtFrom = datetime.now() - delta6h
-#         dtTo = datetime.now() + delta6h
-#         makeTimeGridToTables(name, dtTo, 0.5)
-#         fillFileValsToDB(fpath)
-#       os.remove(fpath)
-#
-#   file=r"C:\Users\office22\PycharmProjects\agricult\datafiles\dbStruct.csv"
-#   makeDbPropsInCsv(file)
-#   push_file_FTP(ip,port,userForSendDBStruct,psw,file)
+    delta = timedelta(days=5)
+    now = datetime.now()
+    startgrid = now - delta
+    ip = "192.168.201.45"
+    port = "21"
+    user = "dcontrol10m"
+    psw = "23d-CONTROL"
+
+    out = r"D:\loggernet CSV files\not in grid"
+    userForSendDBStruct = "dbstruct"
+  #  getFilelistFTP(ip, port, user, psw)
+
+    pathlist = download20Ftp(csvFolder, ip, port, user, psw)
+    ftpFolderIsNotEmpty= len(pathlist)>0
+    while ftpFolderIsNotEmpty:
+       for fpath in pathlist: #>>>>>>>>>>>>>>>>>>
+          if os.path.isfile(fpath):
+            validationOK,errorCode=checkFileCommon(fpath)
+            print ("dbfillRun.validation step.val=",validationOK)
+            if validationOK:
+                shutil.copy(fpath,globalConfig.arcOkDirectory)
+                if not isFileInGrid(fpath):
+                    delta6h = timedelta(hours=6)
+                    dtFrom = datetime.now() - delta6h
+                    name, mlist = getTabProperties(fpath)
+                    makeTimeGridToTables(name, dtFrom, 0.5)
+                fillFileValsToDB(fpath)
+            else:
+                shutil.copy(fpath,globalConfig.arcError)
+                logfileStructError(fpath,errorCode)
+            os.remove(fpath)
+        #end for
+
+       pathlist = download20Ftp(csvFolder, ip, port, user, psw)
+       ftpFolderIsNotEmpty = len(pathlist) > 0
+    #END WHILE
+    print("the main of dbfillRun says:ftpFolderIsNotEmpty = ",ftpFolderIsNotEmpty )
+    prepareTablesGrid()

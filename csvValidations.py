@@ -40,9 +40,26 @@ def getTabNamesFrobDB():
     result = []
     for t in row:
         result.append(t[0])
+    cnxn.close()
+    return result
+#############################################################
+def getTabNamesFromStationsTable():
+    cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
+                          "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
+                          "Database=agr-dcontrol;"
+                          "Trusted_Connection=yes;")
+
+    cursor = cnxn.cursor()
+    d = cursor.execute('SELECT tag FROM stations')
+    row = cursor.fetchall()
+    result = []
+    for t in row:
+        result.append(t[0])
+    cnxn.close()
     return result
 #################################################################
 def getMonListFromDB(tabName):
+   # print ("getmonlist says: trying connect to db.  table ",tabName)
     cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
                           "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
                           "Database=agr-dcontrol;"
@@ -55,7 +72,26 @@ def getMonListFromDB(tabName):
     result = []
     for t in row:
         result.append(t[0])
+    cnxn.close()
     return result
+#####################################################################
+def getMonListFromStationsTable(tabName):
+   ## print ("getmonlist says: trying connect to db.  table ",tabName)
+    cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
+                          "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
+                          "Database=agr-dcontrol;"
+                          "Trusted_Connection=yes;")
+
+    cursor = cnxn.cursor()
+
+ #   d = cursor.execute("select tag from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='"+tabName +"'")
+   # row = cursor.fetchall()
+  #  result = []
+  #  for t in row:
+   #     result.append(t[0])
+ #   cnxn.close()
+   # return result
+
 
   ##############################################################
 def checkDateField(csvFilePath):

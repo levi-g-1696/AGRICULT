@@ -1,5 +1,7 @@
 import os
 
 workDirectory=r"C:\Users\office22\PycharmProjects\agricult"
-logDirectory=  os.path.join(workDirectory, "Log")
-csvFilesDirectory= r"C:\Users\office22\PycharmProjects\agricult\datafiles"
+logFile=  r"D:\loggernet CSV files\log\fileStructErr.csv"
+csvFilesDirectory= r"D:\loggernet CSV files\csv"
+arcOkDirectory = r"D:\loggernet CSV files\arc valid files"
+arcError= r"D:\loggernet CSV files\error"
