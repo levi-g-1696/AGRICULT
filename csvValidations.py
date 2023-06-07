@@ -160,9 +160,19 @@ def checkFileCommon(csv_filename): # without gui
 
    return checkOK,errorCode
 
-
-
-
+def getCommonMonList():
+    monset = set()
+    tablist = getTabNamesFrobDB()
+    tablist.remove('VLDstat')
+    tablist.remove('stations')
+    for tb in tablist:
+        monlist = getMonListFromDB(tb)
+        print(tb, "## ", monlist)
+        monset.update(monlist)
+        monset |= set(monlist)
+    print(monset)
+    print(len(monset))
+    return list(monset)
 #file= r"C:\Users\office22\Desktop\zmani\agricultCSV\a48.csv"
 #print (checkFileCommon(file))
 

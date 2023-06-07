@@ -3,13 +3,9 @@ import os
 import shutil
 from csvValidations import getTabProperties,getMonListFromDB,getTabNamesFromStationsTable
 from fillDefaults import getLastTimeOfTab
-from fill2 import makeTimeGridToTables
 from fillDefaults import makeTimeGridToTables,isIDinDBgrid
-#makeTimeGridToTables(tabName,fromDate,daysNum):
 import pyodbc
-from csvValidations import getTabNamesFrobDB
 import globalConfig
-from sqlCreateTables import createTable
 from csvValidations import checkFileCommon,makeDbPropsInCsv
 from fillDefaults import getIDbyTime
 import csv
@@ -17,7 +13,7 @@ from ftplib import FTP
 from datetime import datetime,timedelta
 from dateutil.parser import parse
 from getTabProps import getTabProperties
-#from mylogging import logDataFillError
+
 
 ##############################################################
 def getDate(csvRow):
@@ -154,7 +150,7 @@ def download20Ftp(workFolder,ip,port,user,psw):
     fullpathList=[]
     fileList = os.listdir(workFolder)
     for f in fileList:
-        fpath = os.path.join(csvFolder, f)
+        fpath = os.path.join(workFolder, f)
         fullpathList.append(fpath)
     #
     return fullpathList
@@ -206,7 +202,7 @@ def isFileInGrid(csvFile):
             line_count += 1
         return result
 #################################################
-if __name__ == '__main__':
+def dbFillRun():
     csvFolder = globalConfig.csvFilesDirectory
 
     delta = timedelta(days=5)
