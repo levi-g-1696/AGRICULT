@@ -1,7 +1,7 @@
 import pyodbc
 print ("hello")
 cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                      "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
+                      "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
                      "Database=agr-dcontrol;"
                      "Trusted_Connection=yes;")
 

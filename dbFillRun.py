@@ -72,9 +72,8 @@ def fillFileValsToDB(csvFile):
                 reqList.append(req)
             line_count += 1
         cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                              "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
-                              "Database=agr-dcontrol;"
-                              "Trusted_Connection=yes;")
+                              "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
+                              "Database=agr-dcontrol;")
         cursor = cnxn.cursor()
         for req in reqList:
         # This will skip and report errors

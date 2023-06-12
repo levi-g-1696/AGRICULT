@@ -30,7 +30,7 @@ def check_empty_fields2(csv_filename): # without gui
 
 def getTabNamesFrobDB():
     cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                          "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
+                          "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
                           "Database=agr-dcontrol;"
                           "Trusted_Connection=yes;")
 
@@ -45,7 +45,7 @@ def getTabNamesFrobDB():
 #############################################################
 def getTabNamesFromStationsTable():
     cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                          "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
+                          "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
                           "Database=agr-dcontrol;"
                           "Trusted_Connection=yes;")
 
@@ -61,7 +61,7 @@ def getTabNamesFromStationsTable():
 def getMonListFromDB(tabName):
    # print ("getmonlist says: trying connect to db.  table ",tabName)
     cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                          "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
+                          "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
                           "Database=agr-dcontrol;"
                           "Trusted_Connection=yes;")
 
@@ -78,7 +78,7 @@ def getMonListFromDB(tabName):
 def getMonListFromStationsTable(tabName):
    ## print ("getmonlist says: trying connect to db.  table ",tabName)
     cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                          "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
+                          "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
                           "Database=agr-dcontrol;"
                           "Trusted_Connection=yes;")
 
