@@ -27,7 +27,7 @@ def getIDbyTime(dt):
 ###################################################################
 def getLastTimeOfTab(tabName):
   cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                      "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
+                      "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
                       "Database=agr-dcontrol;"
                       "Trusted_Connection=yes;")
 
@@ -61,7 +61,7 @@ def getLastTimeOfTab(tabName):
 ################################################################
 def isIDinDBgrid(tabName,id):
     cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                          "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
+                          "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
                           "Database=agr-dcontrol;"
                           "Trusted_Connection=yes;")
 
@@ -95,7 +95,7 @@ def makeTimeGridToTables(tabName,fromDate,daysNum):
   enddate= dt+delta10days
 
   cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                        "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
+                        "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
                       "Database=agr-dcontrol;"
                       "Trusted_Connection=yes;")
 

@@ -72,8 +72,9 @@ def fillFileValsToDB(csvFile):
                 reqList.append(req)
             line_count += 1
         cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                              "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
-                              "Database=agr-dcontrol;")
+                      "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
+                     "Database=agr-dcontrol;"
+                     "Trusted_Connection=yes;")
         cursor = cnxn.cursor()
         for req in reqList:
         # This will skip and report errors
@@ -209,7 +210,7 @@ def dbFillRun():
     startgrid = now - delta
     ip = "192.168.201.45"
     port = "21"
-    user = "dcontrol10m"
+    user = "realdata10m"
     psw = "23d-CONTROL"
 
     out = r"D:\loggernet CSV files\not in grid"
