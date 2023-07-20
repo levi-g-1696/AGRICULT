@@ -3,7 +3,7 @@ import os
 import shutil
 from csvValidations import getTabProperties,getMonListFromDB,getTabNamesFromStationsTable
 from fillDefaults import getLastTimeOfTab
-from fillDefaults import makeTimeGridToTables,isIDinDBgrid
+from fillDefaults import makeTimeGridToTablesOnVLD,isIDinDBgridOnVLD,makeTimeGridToTablesOnRDS
 import pyodbc
 import globalConfig
 from csvValidations import checkFileCommon,makeDbPropsInCsv
@@ -22,7 +22,7 @@ def getDate(csvRow):
     parse(nextDate)
     return parse(nextDate)
 ############################################
-def prepareTablesGrid():
+def prepareTablesGridOnRDS():
     tabList= getTabNamesFromStationsTable()
     for tab in tabList:
         lastTabTime= getLastTimeOfTab(tab)
@@ -32,12 +32,12 @@ def prepareTablesGrid():
            # print ("debug0003", "numdays:",numdays)
             for j in range(numdays):
             #  print (tab, lastTabTime,"debug828", "j:",j)
-              makeTimeGridToTables(tab,lastTabTime,1)
+              makeTimeGridToTablesOnRDS(tab, lastTabTime, 1)
               lastTabTime = getLastTimeOfTab(tab)
 
-              print (f"PrepareTablesGrid says: grid for {tab} {lastTabTime}+1day is ready")
+              print (f"PrepareTablesGridOnRDS says: grid for {tab} {lastTabTime}+1day is ready")
         else:
-          print (f"PrepareTablesGrid says: grid for {tab} {lastTabTime}+1day is good. no action requered.")
+          print (f"PrepareTablesGridOnRDS says: grid for {tab} {lastTabTime}+1day is good. no action requered.")
 #########################################
 def buildSqlReq(tabname,monList,csvRow):
     time= getDate(csvRow)
@@ -71,17 +71,24 @@ def fillFileValsToDB(csvFile):
                 req= buildSqlReq(tabName,monList, row)
                 reqList.append(req)
             line_count += 1
-        cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                      "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
-                     "Database=agr-dcontrol;"
-                     "Trusted_Connection=yes;")
+        s = "192.168.203.61,1433\\SQLEXPRESS"
+        user = "agr"
+        psw = '23@@enviRo'
+
+        cnxn = pyodbc.connect(driver='{SQL Server Native Client 11.0}', server=s, database="agr-dcontrol", uid=user,
+                              pwd=psw)
+
+#  ("Driver={SQL Server Native Client 11.0};"   this is the previous connection string for oservation sql
+ #        "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
+  #       "Database=agr-dcontrol;"
+  #       "Trusted_Connection=yes;")'''
         cursor = cnxn.cursor()
         for req in reqList:
         # This will skip and report errors
         # For example, if the tables do not yet exist, this will skip over
         # the DROP TABLE commands
           try:
-            print("exequte sql query:\n", req)
+            print("fillFileValsToDB says: connect to VLD-sql and exequte sql query:\n", req)
             cursor.execute(req)
           except pyodbc.OperationalError as msg:
             print("Command skipped: ", msg)
@@ -177,7 +184,7 @@ def push_file_FTP(ip,port,user, psw,filePath):
     ftp.storbinary('STOR ' + fileName, open(filePath, 'rb'))
     ftp.close()
 ################################################
-def isFileInGrid(csvFile):
+def isFileInGridOnVLD(csvFile):
     with open(csvFile) as csv_file:
         row_count = 0
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -193,7 +200,7 @@ def isFileInGrid(csvFile):
 
                 rowid= getIDbyTime(dt)
                 tname,x= getTabProperties(csvFile)
-                if isIDinDBgrid(tname,rowid) :continue
+                if isIDinDBgridOnVLD(tname, rowid) :continue
                 else:
                     result=False
                    # print (f"isFileIngrid says: file {csvFile} tab {tname} has not grid in Db for {rowid}")
@@ -217,6 +224,9 @@ def dbFillRun():
     userForSendDBStruct = "dbstruct"
   #  getFilelistFTP(ip, port, user, psw)
 
+    prepareTablesGridOnRDS()
+
+
     pathlist = download20Ftp(csvFolder, ip, port, user, psw)
     ftpFolderIsNotEmpty= len(pathlist)>0
     while ftpFolderIsNotEmpty:
@@ -226,11 +236,11 @@ def dbFillRun():
             print ("dbfillRun.validation step.val=",validationOK)
             if validationOK:
                 shutil.copy(fpath,globalConfig.arcOkDirectory)
-                if not isFileInGrid(fpath):
+                if not isFileInGridOnVLD(fpath):
                     delta6h = timedelta(hours=6)
                     dtFrom = datetime.now() - delta6h
                     name, mlist = getTabProperties(fpath)
-                    makeTimeGridToTables(name, dtFrom, 0.5)
+                    makeTimeGridToTablesOnVLD(name, dtFrom, 0.5, "VLD")
                 fillFileValsToDB(fpath)
             else:
                 shutil.copy(fpath,globalConfig.arcError)
@@ -242,4 +252,3 @@ def dbFillRun():
        ftpFolderIsNotEmpty = len(pathlist) > 0
     #END WHILE
     print("the main of dbfillRun says:ftpFolderIsNotEmpty = ",ftpFolderIsNotEmpty )
-    prepareTablesGrid()

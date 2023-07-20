@@ -57,13 +57,49 @@ def getLastTimeOfTab(tabName):
   dt = roundDate(dt)
 
   return dt
+########################################################
+def isIDinDBgridOnRDS(tabName,id):
+    '''cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
+                              "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
+                              "Database=agr-dcontrol;"
+                              "Trusted_Connection=yes;")'''
+    server = 'observationdb.cbq8ahnbfrlw.eu-north-1.rds.amazonaws.com'
+    database = 'observationdb'
+    username = 'admin'
+    password = 'HjHtEpugt8esmznd07vZ'
 
+    # Create the connection string
+    cnxn = pyodbc.connect(f'DRIVER={{ODBC Driver 17 for SQL Server}};'
+                          f'SERVER={server};'
+                          f'DATABASE={database};'
+                          f'UID={username};'
+                          f'PWD={password}')
+    cursor = cnxn.cursor()
+    checkIfExistCom = f"select id from [{tabName}] where id= {id}"
+    cursor.execute(checkIfExistCom)
+
+    row = cursor.fetchone()
+
+    if row == None or row[0] == None:
+        print(f"id {id} for {tabName} is not in grid")
+        return False
+    else:
+        print(f"new id {id} for {tabName}  is in grid!!")
+        return True
+
+    ##################
 ################################################################
-def isIDinDBgrid(tabName,id):
-    cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                          "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
-                          "Database=agr-dcontrol;"
-                          "Trusted_Connection=yes;")
+def isIDinDBgridOnVLD(tabName, id):  #not in use . only isIDinDBgridOnRDS required
+    # cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
+    #                       "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
+    #                       "Database=agr-dcontrol;"
+    #                       "Trusted_Connection=yes;")
+    s = "192.168.203.61,1433\\SQLEXPRESS"
+    user = "agr"
+    psw = '23@@enviRo'
+
+    cnxn = pyodbc.connect(driver='{SQL Server Native Client 11.0}', server=s, database="agr-dcontrol", uid=user,
+                          pwd=psw)
 
     cursor = cnxn.cursor()
     checkIfExistCom = f"select id from [{tabName}] where id= {id}"
@@ -84,7 +120,7 @@ def getNext10mTime(dt):
     return roundDate(nextdate)
 
 ################################################################
-def makeTimeGridToTables(tabName,fromDate,daysNum):
+def makeTimeGridToTablesOnRDS(tabName, fromDate, daysNum):
   statusTable="VLDstat"
   #lastTime = getLastTimeOfTab(tabName)
 
@@ -94,10 +130,6 @@ def makeTimeGridToTables(tabName,fromDate,daysNum):
 
   enddate= dt+delta10days
 
-  cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                        "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
-                      "Database=agr-dcontrol;"
-                      "Trusted_Connection=yes;")
 
   # Database connection settings
   server = 'observationdb.cbq8ahnbfrlw.eu-north-1.rds.amazonaws.com'
@@ -111,7 +143,6 @@ def makeTimeGridToTables(tabName,fromDate,daysNum):
                         f'UID={username};'
                         f'PWD={password}')
 
-  cursor = cnxn.cursor()
   cursor_aws = cnxn_aws.cursor()
   tabVLDname= tabName+"v"
 
@@ -122,7 +153,59 @@ def makeTimeGridToTables(tabName,fromDate,daysNum):
   while (nextdate< enddate):
     nextid= getIDbyTime(nextdate)
 
-    if isIDinDBgrid(tabName,nextid):
+    if isIDinDBgridOnRDS(tabName,nextid):
+      nooperation=1
+    #  print(f"makeTimeGridToTables says: id {nextid} already in table {tabName} ")
+
+    else :
+        dateStr = nextdate.strftime("%Y-%m-%dT%H:%M:%S")
+        com = f"INSERT INTO [{tabName}] (id,datetime) VALUES ({nextid},'{dateStr}')"
+        comVLD = f"INSERT INTO [{tabVLDname}] (id,datetime) VALUES ({nextid},'{dateStr}')"
+        comStatus = f"INSERT INTO [{statusTable}] (tableName,FK,datastate,vldstate,sendstate) VALUES ( '{tabName}',{nextid},{datastateDef},{vldstateDef},{sendstateDef})"
+        print(com)
+
+        cursor_aws.execute(com)
+        print("for aws:",com)
+
+        cursor_aws.execute(comVLD)
+        print(comStatus)
+
+        cursor_aws.execute(comStatus)
+    nextdate = getNext10mTime(nextdate)
+
+  cursor_aws.commit()
+
+#########################################################################
+def makeTimeGridToTablesOnVLD(tabName, fromDate, daysNum):
+  statusTable="VLDstat"
+  #lastTime = getLastTimeOfTab(tabName)
+
+  #dt = datetime.now()
+  dt = fromDate
+  delta10days= timedelta(days=daysNum)
+
+  enddate= dt+delta10days
+  #
+  # cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
+  #                       "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
+  #                     "Database=agr-dcontrol;"
+  #                     "Trusted_Connection=yes;")
+  s = "192.168.203.61,1433\\SQLEXPRESS"
+  user = "agr"
+  psw = '23@@enviRo'
+
+  cnxn = pyodbc.connect(driver='{SQL Server Native Client 11.0}', server=s, database="agr-dcontrol", uid=user,
+                        pwd=psw)
+  cursor = cnxn.cursor()
+  tabVLDname= tabName+"v"
+  nextdate= getNext10mTime(fromDate)
+  datastateDef=-10
+  sendstateDef=0
+  vldstateDef=0
+  while (nextdate< enddate):
+    nextid= getIDbyTime(nextdate)
+
+    if isIDinDBgridOnRDS(tabName,nextid):
       nooperation=1
     #  print(f"makeTimeGridToTables says: id {nextid} already in table {tabName} ")
 
@@ -133,16 +216,16 @@ def makeTimeGridToTables(tabName,fromDate,daysNum):
         comStatus = f"INSERT INTO [{statusTable}] (tableName,FK,datastate,vldstate,sendstate) VALUES ( '{tabName}',{nextid},{datastateDef},{vldstateDef},{sendstateDef})"
         print(com)
         cursor.execute(com)
-        cursor_aws.execute(com)
+
         print("for aws:",com)
         cursor.execute(comVLD)
-        cursor_aws.execute(comVLD)
+
         print(comStatus)
         cursor.execute(comStatus)
-        cursor_aws.execute(comStatus)
+
     nextdate = getNext10mTime(nextdate)
   cursor.commit()
-  cursor_aws.commit()
+
 
 
 #makeTimeGridToTables(("z49"))
