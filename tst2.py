@@ -95,7 +95,7 @@ def isFileInGrid(csvFile):
 
             line_count += 1
         return result
-ip= "192.168.201.45"
+ip= "192.168.203.45"
 port= "21"
 user = "dcontrol10m"
 psw= "23d-CONTROL"

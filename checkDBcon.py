@@ -3,7 +3,7 @@ print ("hello")
 
 
 cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                      "Server=192.168.201.61,1433\\SQLEXPRESS;"
+                      "Server=192.168.203.61,1433\\SQLEXPRESS;"
                      "Database=agr-dcontrol;"
                       'UID=agr;'
                       'PWD=23@@enviRo;'
@@ -13,7 +13,7 @@ cursor = cnxn.cursor()
 d=cursor.execute('SELECT * FROM z48')
 row = cursor.fetchone()
 print (row)
-s="192.168.201.61,1433\\SQLEXPRESS"
+s="192.168.203.61,1433\\SQLEXPRESS"
 user= "agr"
 psw='23@@enviRo'
 c2=  pyodbc.connect(driver='{SQL Server Native Client 11.0}', server=s, database="agr-dcontrol", uid=user, pwd=psw)

@@ -99,7 +99,20 @@ def makeTimeGridToTables(tabName,fromDate,daysNum):
                       "Database=agr-dcontrol;"
                       "Trusted_Connection=yes;")
 
+  # Database connection settings
+  server = 'observationdb.cbq8ahnbfrlw.eu-north-1.rds.amazonaws.com'
+  database = 'observationdb'
+  username = 'admin'
+  password = 'HjHtEpugt8esmznd07vZ'
+
+  cnxn_aws = pyodbc.connect(f'DRIVER={{ODBC Driver 17 for SQL Server}};'
+                        f'SERVER={server};'
+                        f'DATABASE={database};'
+                        f'UID={username};'
+                        f'PWD={password}')
+
   cursor = cnxn.cursor()
+  cursor_aws = cnxn_aws.cursor()
   tabVLDname= tabName+"v"
 
   nextdate= getNext10mTime(fromDate)
@@ -120,11 +133,16 @@ def makeTimeGridToTables(tabName,fromDate,daysNum):
         comStatus = f"INSERT INTO [{statusTable}] (tableName,FK,datastate,vldstate,sendstate) VALUES ( '{tabName}',{nextid},{datastateDef},{vldstateDef},{sendstateDef})"
         print(com)
         cursor.execute(com)
+        cursor_aws.execute(com)
+        print("for aws:",com)
         cursor.execute(comVLD)
+        cursor_aws.execute(comVLD)
         print(comStatus)
         cursor.execute(comStatus)
+        cursor_aws.execute(comStatus)
     nextdate = getNext10mTime(nextdate)
   cursor.commit()
+  cursor_aws.commit()
 
 
 #makeTimeGridToTables(("z49"))
