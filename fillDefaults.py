@@ -1,3 +1,5 @@
+import time
+
 import pyodbc
 from datetime import datetime, timedelta
 
@@ -25,14 +27,29 @@ def getIDbyTime(dt):
   return id
 
 ###################################################################
-def getLastTimeOfTab(tabName):
-  cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-                      "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
-                      "Database=agr-dcontrol;"
-                      "Trusted_Connection=yes;")
+def getLastTimeOfTabOnRDS(tabName):
+ # cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
+ #                     "Server=DESKTOP-5CJPAFM\\SQLEXPRESS;"
+  #                    "Database=agr-dcontrol;"
+  #                    "Trusted_Connection=yes;")
 
-  cursor = cnxn.cursor()
-  #^^^^^^^^^^^^^^^^^^^^debug^^^^^^^^^^^^^^^^^^^^
+
+
+  server = 'observationdb.cbq8ahnbfrlw.eu-north-1.rds.amazonaws.com'
+  database = 'observationdb'
+  username = 'admin'
+  password = 'HjHtEpugt8esmznd07vZ'
+
+  cnxn_aws = pyodbc.connect(f'DRIVER={{ODBC Driver 17 for SQL Server}};'
+                          f'SERVER={server};'
+                          f'DATABASE={database};'
+                          f'UID={username};'
+                          f'PWD={password}')
+
+
+  cursor = cnxn_aws.cursor()
+
+#^^^^^^^^^^^^^^^^^^^^debug^^^^^^^^^^^^^^^^^^^^
   #d = cursor.execute(f'SELECT datetime FROM {tabName}')
  # row = cursor.fetchone()
 #  print(row)
@@ -150,6 +167,7 @@ def makeTimeGridToTablesOnRDS(tabName, fromDate, daysNum):
   datastateDef=-10
   sendstateDef=0
   vldstateDef=0
+  print(f"makeTimeGridToTablesOnRDS says: fromdate={fromDate}")
   while (nextdate< enddate):
     nextid= getIDbyTime(nextdate)
 
@@ -171,6 +189,7 @@ def makeTimeGridToTablesOnRDS(tabName, fromDate, daysNum):
         print(comStatus)
 
         cursor_aws.execute(comStatus)
+        time.sleep(0.2)
     nextdate = getNext10mTime(nextdate)
 
   cursor_aws.commit()
@@ -205,7 +224,7 @@ def makeTimeGridToTablesOnVLD(tabName, fromDate, daysNum):
   while (nextdate< enddate):
     nextid= getIDbyTime(nextdate)
 
-    if isIDinDBgridOnRDS(tabName,nextid):
+    if isIDinDBgridOnVLD(tabName,nextid):
       nooperation=1
     #  print(f"makeTimeGridToTables says: id {nextid} already in table {tabName} ")
 

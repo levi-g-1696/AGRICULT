@@ -2,7 +2,7 @@ import logging
 import os
 import shutil
 from csvValidations import getTabProperties,getMonListFromDB,getTabNamesFromStationsTable
-from fillDefaults import getLastTimeOfTab
+from fillDefaults import getLastTimeOfTabOnRDS
 from fillDefaults import makeTimeGridToTablesOnVLD,isIDinDBgridOnVLD,makeTimeGridToTablesOnRDS
 import pyodbc
 import globalConfig
@@ -25,17 +25,17 @@ def getDate(csvRow):
 def prepareTablesGridOnRDS():
     tabList= getTabNamesFromStationsTable()
     for tab in tabList:
-        lastTabTime= getLastTimeOfTab(tab)
+        lastTabTime= getLastTimeOfTabOnRDS(tab)
      #   while lastTabTime-  datetime.timedelta(hours=12) < datetime.datetime.now():
         if lastTabTime-  timedelta(hours=12) < datetime.now():
             numdays= abs((datetime.now() - lastTabTime).days)+1
            # print ("debug0003", "numdays:",numdays)
-            for j in range(numdays):
+           # for j in range(numdays):
             #  print (tab, lastTabTime,"debug828", "j:",j)
-              makeTimeGridToTablesOnRDS(tab, lastTabTime, 1)
-              lastTabTime = getLastTimeOfTab(tab)
-
-              print (f"PrepareTablesGridOnRDS says: grid for {tab} {lastTabTime}+1day is ready")
+            #  makeTimeGridToTablesOnRDS(tab, lastTabTime, 1)
+            #  lastTabTime = getLastTimeOfTabOnRDS(tab)
+            makeTimeGridToTablesOnRDS(tab, lastTabTime, 1)
+            print (f"PrepareTablesGridOnRDS says: grid for {tab} {lastTabTime}+1day is ready")
         else:
           print (f"PrepareTablesGridOnRDS says: grid for {tab} {lastTabTime}+1day is good. no action requered.")
 #########################################
@@ -54,7 +54,7 @@ def buildSqlReq(tabname,monList,csvRow):
     str= str+ f" WHERE id={id}"
     return str
 ###################################################
-def fillFileValsToDB(csvFile):
+def fillFileValsToDBOnVLD(csvFile):
   valsList=[]
   reqList=[]
   tabName,monList = getTabProperties(csvFile)
@@ -88,7 +88,7 @@ def fillFileValsToDB(csvFile):
         # For example, if the tables do not yet exist, this will skip over
         # the DROP TABLE commands
           try:
-            print("fillFileValsToDB says: connect to VLD-sql and exequte sql query:\n", req)
+            print("fillFileValsToDBonVLD says: connect to VLD-sql and exequte sql query:\n", req)
             cursor.execute(req)
           except pyodbc.OperationalError as msg:
             print("Command skipped: ", msg)
@@ -224,7 +224,7 @@ def dbFillRun():
     userForSendDBStruct = "dbstruct"
   #  getFilelistFTP(ip, port, user, psw)
 
-    prepareTablesGridOnRDS()
+ #   prepareTablesGridOnRDS()
 
 
     pathlist = download20Ftp(csvFolder, ip, port, user, psw)
@@ -237,11 +237,11 @@ def dbFillRun():
             if validationOK:
                 shutil.copy(fpath,globalConfig.arcOkDirectory)
                 if not isFileInGridOnVLD(fpath):
-                    delta6h = timedelta(hours=6)
-                    dtFrom = datetime.now() - delta6h
+                    delta6h = timedelta(hours=6) # it is not right bcause we have to check file data time. not now time.
+                    dtFrom = datetime.now() - delta6h  #  but because there are only real time data here , it will run ok
                     name, mlist = getTabProperties(fpath)
                     makeTimeGridToTablesOnVLD(name, dtFrom, 0.5, "VLD")
-                fillFileValsToDB(fpath)
+                fillFileValsToDBOnVLD(fpath)
             else:
                 shutil.copy(fpath,globalConfig.arcError)
                 logfileStructError(fpath,errorCode)
