@@ -40,6 +40,7 @@ def prepareTablesGrid():
           print (f"PrepareTablesGrid says: grid for {tab} {lastTabTime}+1day is good. no action requered.")
 #########################################
 def buildSqlReq(tabname,monList,csvRow):
+
     time= getDate(csvRow)
     id= getIDbyTime(time)
 
@@ -97,7 +98,17 @@ def fillFileValsToDB(csvFile):
     #     else:logDataFillError(filePath,errorCode)
 
 ############################################################################
+def getListOfFullPath(directory):
 
+    import os
+    from os import listdir
+    from os.path import isfile, join
+
+    cwd = directory
+    onlyfiles = [os.path.join(cwd, f) for f in os.listdir(cwd) if
+                 os.path.isfile(os.path.join(cwd, f))]
+    return onlyfiles
+##############################################
 def getFilelistFTP(ip,port,user, psw):
     ftp = FTP()
     ftp.connect(ip, int(port))
@@ -208,7 +219,7 @@ def dbFillRun():
     delta = timedelta(days=5)
     now = datetime.now()
     startgrid = now - delta
-    ip = "192.168.201.45"
+    ip = "192.168.203.45"
     port = "21"
     user = "dcontrol10m"
     psw = "23d-CONTROL"
@@ -243,3 +254,86 @@ def dbFillRun():
     #END WHILE
     print("the main of dbfillRun says:ftpFolderIsNotEmpty = ",ftpFolderIsNotEmpty )
     prepareTablesGrid()
+    #################################################################
+def dbFillHistory():
+    csvFolder = globalConfig.historyCsvDirectory
+
+    delta = timedelta(days=5)
+    now = datetime.now()
+    startgrid = now - delta
+    ip = "192.168.203.45"
+    port = "21"
+    user = "history"
+    psw = "23d-CONTROL"
+
+    out = r"D:\loggernet CSV files\not in grid"
+    userForSendDBStruct = "dbstruct"
+    #  getFilelistFTP(ip, port, user, psw)
+
+   # pathlist = download20Ftp(csvFolder, ip, port, user, psw)
+    pathlist= get5LatestFilesDeletingSource(csvFolder)
+    isFolderNotEmpty = len(pathlist) > 0
+    if permissionCheck():
+
+      while isFolderNotEmpty:
+        for fpath in pathlist:  # >>>>>>>>>>>>>>>>>>
+            if os.path.isfile(fpath):
+                validationOK, errorCode = checkFileCommon(fpath)
+                print("dbfillRun.validation step.val=", validationOK)
+                if validationOK:
+                    shutil.copy(fpath, globalConfig.arcOkDirectory)
+                    if not isFileInGrid(fpath):
+                        delta6h = timedelta(hours=6)
+                        dtFrom = getDataTime(fpath) - delta6h
+                        name, mlist = getTabProperties(fpath)
+                        makeTimeGridToTables(name, dtFrom, 0.5)
+                    fillFileValsToDB(fpath)
+                else:
+                    shutil.copy(fpath, globalConfig.arcError)
+                    logfileStructError(fpath, errorCode)
+                os.remove(fpath)
+        # end for
+
+      #
+        #pathlist = download20Ftp(csvFolder, ip, port, user, psw)
+        pathlist = get5LatestFilesDeletingSource(csvFolder)
+        isFolderNotEmpty = len(pathlist) > 0
+    else:
+        print("the username or password is wrong\n You do not have permissions to continue here.")
+        return
+    # END WHILE
+    print("the main of dbfillRun says:ftpFolderIsNotEmpty = ", isFolderNotEmpty)
+    prepareTablesGrid()
+    ##############################################
+def permissionCheck():
+    user = input("You have entered to db history update mode. Please type username:\n")
+    psw = input("Please type password:\n")
+    if user == "agadmin" and psw == "23enviro23": return True
+    else: return False
+##########################################
+def getDataTime(csvFile):
+    with open(csvFile) as csv_file:
+        row_count = 0
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        k = 0
+        line_count = 0
+        for row in csv_reader:
+            if line_count == 0:
+                # go to next- only data lines we need
+                line_count += 1
+            else:
+                dt=getDate(row)
+                line_count += 1
+                break
+        return dt
+def get5LatestFilesDeletingSource(path):
+        n = 5
+        flist = []
+        for k in range(n):
+            files = os.listdir(path)
+            paths = [os.path.join(path, basename) for basename in files]
+            latest = max(paths, key=os.path.getmtime)
+            flist.append(latest)
+            os.remove(latest)
+        print("latest:", flist)
+        return flist

@@ -181,7 +181,7 @@ csvFolder= globalConfig.csvFilesDirectory
 delta=  timedelta(days=5)
 now = datetime.now()
 startgrid= now - delta
-ip= "192.168.201.45"
+ip= "192.168.203.45"
 port= "21"
 user = "dcontrol10m"
 psw= "23d-CONTROL"
