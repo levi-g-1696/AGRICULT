@@ -1,5 +1,11 @@
 import pyodbc
+outFile= ".\\datafiles\\newStationCreationScript.txt"
+######################################
+def writeLine(file,line):
+  with open(file, 'a') as the_file:
+    the_file.write(line +"\n")
 
+###########################################
 def createTable(tabName,columnsList):
   cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
                       "Server=DESKTOP-3BJPAFM\\SQLEXPRESS;"
@@ -44,9 +50,11 @@ def createTable(tabName,columnsList):
 #comandlist= script.split(';')
 
   cursor.execute(scriptRT)
+  writeLine(outFile,scriptRT)
   cnxn.commit()
   print("runing create tableVLD for ", tabName)
   cursor.execute(scriptVLD)
+  writeLine(outFile,scriptVLD)
   cnxn.commit()
   return
 #print (comandlist)

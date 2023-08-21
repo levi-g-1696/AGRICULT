@@ -1,4 +1,5 @@
 from datetime import datetime
+from printColor import printColor3
 import json,os
 import time
 from dbFillRun import dbFillRun
@@ -46,5 +47,5 @@ if __name__ == '__main__':
       dbFillRun()
       dt= datetime.now()
       setLastRunTime()
-      print(f"{dt}  tool is running.\n ")
+      printColor3(f"{dt}    #######      dbFillRun       ###### .\n ")
       time.sleep(20)

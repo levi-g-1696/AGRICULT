@@ -7,6 +7,11 @@ from csvValidations import getMonListFromDB,getTabNamesFromStationsTable,getTabN
 from fillDefaults import getLastTimeOfTab
 from fillDefaults import makeTimeGridToTables
 from csvValidations import getTabProperties
+outFile= ".\\datafiles\\newStationCreationScript.txt"
+######################################
+def writeLine(file,line):
+  with open(file, 'a') as the_file:
+    the_file.write(line +"\n")
 ###############################
 # one time tool to fill all existing tables to station table
 # think it must contain station names only(a3,a45) not tha validations tables (a3v,a45v)
@@ -34,6 +39,7 @@ def addNewStations():
       try:
           print("exequte sql query:\n", query)
           cursor.execute(query)
+          writeLine(outFile,query)
       except pyodbc.OperationalError as msg:
           print("Command skipped: ", msg)
     cursor.commit()
@@ -66,6 +72,7 @@ def addOneStation(tab):
             try:
                 print("exequte sql query:\n", query)
                 cursor.execute(query)
+                writeLine(outFile,query)
             except pyodbc.OperationalError as msg:
                 print("Command skipped: ", msg)
         else: print("No? ok. Good by.")
@@ -91,6 +98,7 @@ def addMonToScripts(monlist):
       try:
           print("exequte sql query:\n", query)
           cursor.execute(query)
+          writeLine(outFile,query)
       except pyodbc.OperationalError as msg:
           print("Command skipped: ", msg)
     cursor.commit()
@@ -124,6 +132,18 @@ def addNewTableByDataFile(filePath)    :
          else: print("the path is not a file.\nBye")
          return
 ############################################
+def getFilePathWithGUI():
+    import tkinter as tk
+
+    from tkinter import filedialog as fd
+
+    root = tk.Tk()
+    root.withdraw()
+    file = fd.askopenfile(parent=root, mode='rb', title='Choose a file')
+    if file:
+        return file.name
+    else: raise Exception ("error . must enter csv file")
+    #############################################
 def getCommonMonList():
     monset = set()
     tablist = getTabNamesFrobDB()
@@ -150,13 +170,13 @@ ml= getCommonMonList()
 monTag="monWD222"
 #if monTag not in ml: print (f"monTag {monTag} is not in use in the DB")
 #else : print(f"monTag {monTag} is already in use ")
-filepath=r"D:\csv for new station sreating\pen114.fromLSI-20230716.1012-FKDrg.csv"
+filepath=getFilePathWithGUI()
 
 addNewTableByDataFile(filepath)
 ##name="43a10"
 # delta = timedelta(days=5)
-# now = datetime.now()
-# startgrid = now - delta
+# now = datetime.now()y
+# startgrid = now - deltan
 # makeTimeGridToTables("43a10",startgrid,7)
 # print (f"tables for {name} and grid were succesfully created")
 # addOneStation(name)

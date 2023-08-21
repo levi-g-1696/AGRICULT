@@ -213,7 +213,7 @@ def isFileInGrid(csvFile):
             line_count += 1
         return result
 #################################################
-def dbFillRun():
+def dbFillRun():  # file source may be "loggernet" or "penman"
     csvFolder = globalConfig.csvFilesDirectory
 
     delta = timedelta(days=5)
